@@ -1,141 +1,94 @@
 "use client"
-
 import { useEffect, useState } from "react"
+import { ShoppingCart, Trash2, Plus, CheckCircle } from "lucide-react"
 
 export default function Vendas() {
-
   const [produtos, setProdutos] = useState([])
-  const [quantidadeVenda, setQuantidadeVenda] = useState({})
-
-  async function carregarProdutos() {
-    const res = await fetch("/api/produtos")
-    const data = await res.json()
-    setProdutos(data)
-  }
+  const [carrinho, setCarrinho] = useState([])
+  const [selecionado, setSelecionado] = useState("")
+  const [qtd, setQtd] = useState(1)
 
   useEffect(() => {
-    carregarProdutos()
+    fetch("/api/produtos").then(res => res.json()).then(setProdutos)
   }, [])
 
-  async function venderProduto(produto) {
+  function addCarrinho() {
+    const p = produtos.find(item => item.id == selecionado)
+    if (!p || p.quantidade < qtd) return alert("Estoque insuficiente!")
+    
+    setCarrinho([...carrinho, { ...p, quantidadeVenda: qtd, tempId: Date.now() }])
+    setSelecionado(""); setQtd(1)
+  }
 
-    const quantidade = quantidadeVenda[produto.id] || 0
+  async function finalizarVenda() {
+    if (carrinho.length === 0) return
 
-    if (quantidade <= 0) {
-      alert("Informe a quantidade")
-      return
-    }
-
-    if (quantidade > produto.quantidade) {
-      alert("Estoque insuficiente")
-      return
-    }
-
-    // registrar venda
-    await fetch("/api/vendas", {
+    // 1. Registra a venda
+    const resVenda = await fetch("/api/vendas", {
       method: "POST",
-      headers: {
-        "Content-Type":"application/json"
-      },
-      body: JSON.stringify({
-        produto: produto.nome,
-        quantidade: quantidade,
-        preco: produto.preco
-      })
+      body: JSON.stringify({ itens: carrinho })
     })
 
-    // atualizar estoque
-    await fetch("/api/produtos", {
-      method:"PUT",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        id: produto.id,
-        valor: -quantidade
-      })
-    })
-
-    // registrar movimentação
-    await fetch("/api/movimentacoes", {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        produto: produto.nome,
-        tipo: "venda",
-        quantidade: quantidade
-      })
-    })
-
-    emitirNota(produto, quantidade)
-
-    carregarProdutos()
+    if (resVenda.ok) {
+      // 2. Atualiza o estoque de cada produto via API (PUT)
+      for (const item of carrinho) {
+        await fetch("/api/produtos", {
+          method: "PUT",
+          body: JSON.stringify({ id: item.id, quantidadeVenda: item.quantidadeVenda })
+        })
+      }
+      alert("Venda realizada com sucesso!");
+      setCarrinho([]);
+      // Atualiza lista local de produtos
+      fetch("/api/produtos").then(res => res.json()).then(setProdutos)
+    }
   }
 
-  function emitirNota(produto, quantidade){
-
-    const total = quantidade * Number(produto.preco)
-
-    const janela = window.open("", "", "width=600,height=700")
-
-    janela.document.write(`
-      <h2>Nota de Venda</h2>
-      <p>Produto: ${produto.nome}</p>
-      <p>Quantidade: ${quantidade}</p>
-      <p>Preço: R$ ${produto.preco}</p>
-      <p>Total: R$ ${total}</p>
-      <br>
-      <button onclick="window.print()">Imprimir</button>
-    `)
-
-    janela.document.close()
-  }
+  const total = carrinho.reduce((acc, item) => acc + (item.preco * item.quantidadeVenda), 0)
 
   return (
-
-    <div>
-
-      <h1 className="text-3xl font-bold mb-6">
-        Realizar Venda
-      </h1>
-
-      {produtos.map(p => (
-
-        <div
-          key={p.id}
-          className="bg-gray-800 p-4 rounded mb-3 flex gap-3 items-center"
-        >
-
-          <div className="flex-1">
-            {p.nome} | Estoque: {p.quantidade}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 space-y-6">
+        <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800">
+          <h2 className="text-white font-bold mb-4">Selecionar Itens</h2>
+          <div className="flex gap-4">
+            <select className="flex-1 bg-gray-800 border-gray-700 rounded-xl p-3 text-white" 
+                    value={selecionado} onChange={e => setSelecionado(e.target.value)}>
+              <option value="">Escolha um produto...</option>
+              {produtos.map(p => (
+                <option key={p.id} value={p.id}>{p.nome} ({p.quantidade} un)</option>
+              ))}
+            </select>
+            <input type="number" className="w-20 bg-gray-800 border-gray-700 rounded-xl p-3 text-white" 
+                   value={qtd} onChange={e => setQtd(e.target.value)} />
+            <button onClick={addCarrinho} className="bg-blue-600 p-3 rounded-xl hover:bg-blue-700 transition">
+              <Plus />
+            </button>
           </div>
-
-          <input
-            type="number"
-            className="w-20 p-1 rounded text-black"
-            placeholder="Qtd"
-            onChange={(e)=>
-              setQuantidadeVenda({
-                ...quantidadeVenda,
-                [p.id]: Number(e.target.value)
-              })
-            }
-          />
-
-          <button
-            className="bg-green-500 px-3 py-1 rounded"
-            onClick={()=>venderProduto(p)}
-          >
-            Vender
-          </button>
-
         </div>
 
-      ))}
+        <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
+          {carrinho.map(item => (
+            <div key={item.tempId} className="p-4 flex justify-between border-b border-gray-800 items-center">
+              <div>
+                <p className="text-white font-medium">{item.nome}</p>
+                <p className="text-gray-500 text-sm">{item.quantidadeVenda}x R$ {item.preco.toFixed(2)}</p>
+              </div>
+              <button onClick={() => setCarrinho(carrinho.filter(i => i.tempId !== item.tempId))} className="text-red-500">
+                <Trash2 size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
+      <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800 h-fit space-y-4">
+        <h2 className="text-gray-400 uppercase text-xs font-bold">Resumo</h2>
+        <div className="text-3xl font-bold text-white">R$ {total.toFixed(2)}</div>
+        <button onClick={finalizarVenda} className="w-full bg-green-600 py-4 rounded-xl font-bold text-white hover:bg-green-700 transition flex items-center justify-center gap-2">
+          <CheckCircle size={20} /> Finalizar Venda
+        </button>
+      </div>
     </div>
-
   )
 }
