@@ -4,14 +4,15 @@ import {
   FileText, 
   ArrowUpCircle, 
   ArrowDownCircle, 
-  Filter, 
   Download,
   Calendar
 } from "lucide-react"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
 export default function Relatorios() {
   const [dados, setDados] = useState([])
-  const [filtro, setFiltro] = useState("todos") // todos, entrada, saida
+  const [filtro, setFiltro] = useState("todos") 
 
   async function carregar() {
     const res = await fetch("/api/movimentacoes")
@@ -23,13 +24,43 @@ export default function Relatorios() {
     carregar()
   }, [])
 
-  const filtrados = dados.filter(m => 
-    filtro === "todos" ? true : m.tipo === filtro
-  )
+  const filtrados = dados
+    .filter(m => filtro === "todos" ? true : m.tipo === filtro)
+    .sort((a, b) => b.id - a.id)
+
+  const exportarPDF = () => {
+    const doc = new jsPDF()
+
+    doc.setFontSize(18)
+    doc.text("Relatório de Movimentação de Estoque", 14, 20)
+    
+    doc.setFontSize(10)
+    doc.setTextColor(100)
+    doc.text(`Gerado em: ${new Date().toLocaleString()}`, 14, 28)
+    doc.text(`Filtro aplicado: ${filtro.toUpperCase()}`, 14, 33)
+
+    const colunas = ["Data e Hora", "Produto", "Tipo", "Quantidade"]
+    const linhas = filtrados.map(m => [
+      m.data,
+      m.produto,
+      m.tipo.toUpperCase(),
+      `${m.tipo === 'entrada' ? '+' : '-'}${m.quantidade}`
+    ])
+    
+    autoTable(doc, {
+      head: [colunas],
+      body: linhas,
+      startY: 40,
+      theme: 'grid',
+      headStyles: { fillColor: [37, 99, 235] }, 
+      styles: { fontSize: 9 }
+    })
+
+    doc.save(`relatorio-estoque-${filtro}.pdf`)
+  }
 
   return (
     <div className="space-y-8">
-      
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white flex items-center gap-3">
@@ -39,13 +70,15 @@ export default function Relatorios() {
         </div>
         
         <div className="flex items-center gap-2">
-          <button className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-xl border border-gray-700 transition text-sm font-medium">
+          <button 
+            onClick={exportarPDF}
+            className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-xl border border-gray-700 transition text-sm font-medium"
+          >
             <Download size={16} /> Exportar PDF
           </button>
         </div>
       </header>
 
-      
       <div className="flex items-center gap-4 bg-gray-900/50 p-2 rounded-2xl border border-gray-800 w-fit">
         <button 
           onClick={() => setFiltro("todos")}
@@ -67,7 +100,6 @@ export default function Relatorios() {
         </button>
       </div>
 
-     
       <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-sm">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -128,7 +160,6 @@ export default function Relatorios() {
         </table>
       </div>
 
-      
       <footer className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
           <p className="text-gray-500 text-xs uppercase font-bold">Total de Operações</p>

@@ -21,26 +21,44 @@ export default function Vendas() {
   }
 
   async function finalizarVenda() {
-    if (carrinho.length === 0) return
+    if (carrinho.length === 0) return;
 
-    // 1. Registra a venda
     const resVenda = await fetch("/api/vendas", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ itens: carrinho })
-    })
+    });
 
     if (resVenda.ok) {
-      // 2. Atualiza o estoque de cada produto via API (PUT)
       for (const item of carrinho) {
+      
         await fetch("/api/produtos", {
           method: "PUT",
-          body: JSON.stringify({ id: item.id, quantidadeVenda: item.quantidadeVenda })
-        })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            id: item.id, 
+            quantidadeVenda: item.quantidadeVenda,
+            tipo: "saida" 
+          })
+        });
+
+        await fetch("/api/movimentacoes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            produto: item.nome,
+            tipo: "saida",
+            quantidade: item.quantidadeVenda
+          })
+        });
       }
-      alert("Venda realizada com sucesso!");
+
+      alert("Venda finalizada com sucesso!");
       setCarrinho([]);
-      // Atualiza lista local de produtos
-      fetch("/api/produtos").then(res => res.json()).then(setProdutos)
+    
+      fetch("/api/produtos").then(res => res.json()).then(setProdutos);
+    } else {
+      alert("Erro ao finalizar venda no servidor.");
     }
   }
 

@@ -13,40 +13,49 @@ export default function Produtos() {
   const [quantidade, setQuantidade] = useState("")
   const [preco, setPreco] = useState("")
 
-  // 1. Carregar produtos da API ao abrir a página
   useEffect(() => {
     fetch("/api/produtos")
       .then(res => res.json())
       .then(data => setProdutos(data))
   }, [])
 
-  // 2. Função para adicionar produto
+  
   async function handleAdicionar(e) {
-    e.preventDefault()
+  e.preventDefault();
 
-    const novo = {
-      nome,
-      categoria: categoria || "Geral",
-      quantidade: Number(quantidade),
-      preco: Number(preco)
-    }
+  const novo = {
+    nome,
+    categoria: categoria || "Geral",
+    quantidade: Number(quantidade),
+    preco: Number(preco)
+  };
 
-    const res = await fetch("/api/produtos", {
+  const res = await fetch("/api/produtos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(novo)
+  });
+
+  if (res.ok) {
+    const produtoSalvo = await res.json();
+
+    await fetch("/api/movimentacoes", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(novo)
-    })
+      body: JSON.stringify({
+        produto: nome,
+        tipo: "entrada",
+        quantidade: Number(quantidade)
+      })
+    });
 
-    if (res.ok) {
-      const produtoSalvo = await res.json()
-      setProdutos([...produtos, produtoSalvo]) // Atualiza a lista em tempo real
-      setModalAberto(false) // Fecha o modal
-      // Limpa os campos
-      setNome(""); setCategoria(""); setQuantidade(""); setPreco("")
-    }
+    setProdutos([...produtos, produtoSalvo]);
+    setModalAberto(false);
+    
+    setNome(""); setCategoria(""); setQuantidade(""); setPreco("");
   }
+}
 
-  // 3. Função para excluir produto
   async function handleExcluir(id) {
     if (!confirm("Tem certeza que deseja excluir este produto?")) return
 
@@ -57,7 +66,7 @@ export default function Produtos() {
     })
 
     if (res.ok) {
-      setProdutos(produtos.filter(p => p.id !== id)) // Remove da lista em tempo real
+      setProdutos(produtos.filter(p => p.id !== id)) 
     }
   }
 
@@ -68,7 +77,7 @@ export default function Produtos() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER */}
+      
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-white">Inventário</h1>
@@ -83,7 +92,7 @@ export default function Produtos() {
         </button>
       </div>
 
-      {/* TABELA E BUSCA */}
+      
       <div className="bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-sm">
         <div className="p-4 border-b border-gray-800 bg-gray-900/50 flex items-center gap-3">
           <Search className="text-gray-500" size={20} />
@@ -141,7 +150,7 @@ export default function Produtos() {
         </table>
       </div>
 
-      {/* MODAL DE CADASTRO */}
+      
       {modalAberto && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 border border-gray-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">

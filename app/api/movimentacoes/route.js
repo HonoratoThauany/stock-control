@@ -1,16 +1,6 @@
 import { NextResponse } from "next/server";
 
-let movimentacoes = [];
-
-if (!global.logMovimentacao) {
-  global.logMovimentacao = (dados) => {
-    movimentacoes.push({
-      id: Date.now() + Math.random(),
-      ...dados,
-      data: new Date().toLocaleString('pt-BR')
-    });
-  };
-}
+let movimentacoes = []; 
 
 export async function GET() {
   return NextResponse.json(movimentacoes);
@@ -18,6 +8,13 @@ export async function GET() {
 
 export async function POST(req) {
   const data = await req.json();
-  global.logMovimentacao(data);
-  return NextResponse.json({ ok: true });
+  const nova = {
+    id: Date.now(),
+    produto: data.produto,
+    tipo: data.tipo, 
+    quantidade: data.quantidade,
+    data: new Date().toLocaleString('pt-BR') 
+  };
+  movimentacoes.push(nova);
+  return NextResponse.json(nova);
 }
