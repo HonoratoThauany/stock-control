@@ -1,12 +1,13 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Lock, Mail, User, ArrowLeft, Loader2 } from "lucide-react"
+import { Lock, Mail, User, ArrowLeft, Loader2, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 export default function Registro() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [erro, setErro] = useState("")
   
   const [nome, setNome] = useState("")
   const [email, setEmail] = useState("")
@@ -15,11 +16,28 @@ export default function Registro() {
   async function handleRegistro(e) {
     e.preventDefault()
     setLoading(true)
+    setErro("")
 
-    setTimeout(() => {
-      alert("Conta criada com sucesso! Agora faça login.")
-      router.push("/login")
-    }, 1500)
+    try {
+      const res = await fetch("/api/auth/registro", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nome, email, senha })
+      })
+
+      const dados = await res.json()
+
+      if (res.ok) {
+        alert("Conta criada com sucesso! Redirecionando para o login...")
+        router.push("/login")
+      } else {
+        setErro(dados.error || "Ocorreu um erro ao criar sua conta.")
+      }
+    } catch (error) {
+      setErro("Erro de conexão com o servidor.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -30,6 +48,14 @@ export default function Registro() {
       </div>
 
       <div className="bg-gray-900/50 border border-gray-800 p-8 rounded-3xl backdrop-blur-md shadow-2xl">
+        
+        {erro && (
+          <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-500 text-sm animate-shake">
+            <AlertCircle size={16} />
+            {erro}
+          </div>
+        )}
+
         <form onSubmit={handleRegistro} className="space-y-5">
           <div className="space-y-2">
             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Nome Completo</label>
@@ -53,12 +79,12 @@ export default function Registro() {
             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Senha</label>
             <div className="relative group">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition" size={18} />
-              <input required type="password" className="w-full bg-gray-950 border border-gray-800 rounded-xl py-3 pl-10 pr-4 text-white outline-none focus:ring-2 focus:ring-blue-600/50 transition" 
+              <input required type="password" minLength={6} className="w-full bg-gray-950 border border-gray-800 rounded-xl py-3 pl-10 pr-4 text-white outline-none focus:ring-2 focus:ring-blue-600/50 transition" 
                 value={senha} onChange={(e) => setSenha(e.target.value)} placeholder="••••••••" />
             </div>
           </div>
 
-          <button disabled={loading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-4 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20">
+          <button disabled={loading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl mt-4 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 disabled:opacity-50">
             {loading ? <Loader2 className="animate-spin" size={20} /> : "Cadastrar Agora"}
           </button>
         </form>

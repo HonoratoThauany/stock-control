@@ -1,14 +1,14 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Lock, Mail, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react"
+import { Lock, Mail, Eye, EyeOff, Loader2, ArrowRight, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 export default function Login() {
   const router = useRouter()
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [loading, setLoading] = useState(false)
-  
+  const [erro, setErro] = useState("")
   
   const [email, setEmail] = useState("")
   const [senha, setSenha] = useState("")
@@ -16,16 +16,31 @@ export default function Login() {
   async function handleLogin(e) {
     e.preventDefault()
     setLoading(true)
+    setErro("")
 
-    
-    setTimeout(() => {
-      if (email === "admin@stockpro.com" && senha === "123456") {
+    try {
+      const res = await fetch("api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, senha })
+      })
+
+      const dados = await res.json()
+
+      if (res.ok) {
+        localStorage.setItem("usuario_logado", JSON.stringify(dados.usuario))
+        
+        window.dispatchEvent(new Event("storage"))
+        
         router.push("/dashboard")
       } else {
-        alert("Credenciais inválidas! Use admin@stockpro.com e 123456")
-        setLoading(false)
+        setErro(dados.error || "Erro ao tentar acessar.")
       }
-    }, 1500)
+    } catch (error) {
+      setErro("Falha na conexão com o servidor.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -33,7 +48,7 @@ export default function Login() {
       
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full"></div>
 
-      <div className="w-full max-w-[400px] z-10">
+      <div className="w-full max-w-[400px] z-10 animate-in fade-in zoom-in duration-500">
         
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4 shadow-xl shadow-blue-900/20">
@@ -43,11 +58,16 @@ export default function Login() {
           <p className="text-gray-500 mt-2">Entre com suas credenciais para acessar.</p>
         </div>
 
-        
         <div className="bg-gray-900/50 border border-gray-800 p-8 rounded-3xl backdrop-blur-md shadow-2xl">
+          
+          {erro && (
+            <div className="mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2 text-red-500 text-sm animate-in slide-in-from-top-2">
+              <AlertCircle size={16} />
+              {erro}
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-5">
-            
-            
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500 uppercase ml-1">E-mail Corporativo</label>
               <div className="relative group">
@@ -63,7 +83,6 @@ export default function Login() {
               </div>
             </div>
 
-            
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
                 <label className="text-xs font-bold text-gray-500 uppercase">Sua Senha</label>
@@ -89,11 +108,10 @@ export default function Login() {
               </div>
             </div>
 
-            
             <button 
               disabled={loading}
               type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-4 rounded-xl mt-4 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-4 rounded-xl mt-4 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20 active:scale-95"
             >
               {loading ? (
                 <Loader2 className="animate-spin" size={20} />
@@ -105,17 +123,17 @@ export default function Login() {
               )}
             </button>
           </form>
+
           <div className="mt-6 text-center border-t border-gray-800 pt-6">
             <p className="text-sm text-gray-500">
               Não tem uma conta?{" "}
-              <Link href="/login/registro" className="text-blue-500 hover:text-blue-400 font-bold transition">
+              <Link href="/registro" className="text-blue-500 hover:text-blue-400 font-bold transition">
                 Cadastre-se aqui
               </Link>
             </p>
           </div>
         </div>
 
-        
         <p className="text-center text-gray-600 text-xs mt-8">
           StockPro Inventory Management &copy; 2026 <br/>
           Privacidade e Segurança Garantidos.
