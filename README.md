@@ -6,7 +6,7 @@
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
 > **Status do Projeto:** 🚀 Produção 
-> **Link do Projeto:** [Acesse o StockPro Online](https://stock-control-o8b3oqs5g-honoratothauanys-projects.vercel.app/login)
+> **Link do Projeto:** [Acesse o StockPro Online](https://stock-control-xi.vercel.app/login)
 
 O **StockPro** é uma plataforma SaaS Full Stack projetada para transformar a gestão de pequenos negócios. Diferente de listas de estoque convencionais, este sistema foca na **integridade de dados de missão crítica** e no isolamento total entre lojistas.
 
