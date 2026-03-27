@@ -2,6 +2,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Home, Package, ShoppingCart, FileText, Building2, LayoutGrid } from "lucide-react"
+import Image from 'next/image'
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -17,7 +18,16 @@ export default function Sidebar() {
   return (
     <aside className="w-64 h-screen bg-gray-900 border-r border-gray-800 p-6 flex flex-col gap-8">
       <div className="flex items-center gap-3 px-2">
-        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">S</div>
+        
+
+        <div className="relative h-10 w-10"> 
+          <Image 
+            src="/stockproicon.png" 
+            alt="Logo StockPro" 
+            fill
+            className="object-contain"
+          />
+        </div>
         <span className="font-bold text-xl tracking-tight text-white">StockPro</span>
       </div>
 

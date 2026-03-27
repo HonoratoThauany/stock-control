@@ -18,7 +18,6 @@ export default function Header() {
     foto: null 
   });
 
-  // 1. Carrega dados do LocalStorage (Instantâneo)
   const carregarDadosLocais = () => {
     try {
       const dadosSalvos = localStorage.getItem("usuario_logado");
@@ -39,7 +38,6 @@ export default function Header() {
     }
   };
 
-  // 2. Busca Perfil atualizado no Banco
   const buscarDadosDoBanco = async () => {
     const dadosSalvos = localStorage.getItem("usuario_logado");
     if (!dadosSalvos) return;
