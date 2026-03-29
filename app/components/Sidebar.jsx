@@ -16,10 +16,9 @@ export default function Sidebar() {
   ]
 
   return (
-    <aside className="w-64 h-screen bg-gray-900 border-r border-gray-800 p-6 flex flex-col gap-8">
+    <aside className="hidden md:flex md:w-64 md:h-screen bg-gray-900 border-r border-gray-800 p-6 flex-col gap-8 sticky top-0">
+  
       <div className="flex items-center gap-3 px-2">
-        
-
         <div className="relative h-10 w-10"> 
           <Image 
             src="/stockproicon.png" 

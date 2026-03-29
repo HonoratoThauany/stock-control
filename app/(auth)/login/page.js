@@ -3,6 +3,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Lock, Mail, Eye, EyeOff, Loader2, ArrowRight, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import Image from 'next/image'
 
 export default function Login() {
   const router = useRouter()
@@ -51,8 +52,16 @@ export default function Login() {
       <div className="w-full max-w-[400px] z-10 animate-in fade-in zoom-in duration-500">
         
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-600 mb-4 shadow-xl shadow-blue-900/20">
-            <span className="text-2xl font-black text-white italic">S</span>
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gray-900 border border-gray-800 mb-4 shadow-xl shadow-blue-900/10">
+            <div className="relative h-12 w-12">
+              <Image 
+                src="/stockproicon.png" 
+                alt="Logo StockPro" 
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">StockPro</h1>
           <p className="text-gray-500 mt-2">Entre com suas credenciais para acessar.</p>
